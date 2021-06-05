@@ -23,7 +23,18 @@ class ExpressionOperator():
         return self.op(self.left.eval(), self.right.eval())
 
     def __str__(self):
-        return '(' + self.left.__str__() + symbol[self.op] + self.right.__str__() + ')'
+        return '(' + str(self.left) + symbol[self.op] + str(self.right) + ')'
+
+class ExpressionNeg():
+
+    def __init__(self, right):
+        self.right=right
+
+    def eval(self):
+        return operator.neg(self.right.eval())
+
+    def __str__(self):
+        return '(-' + str(self.right) + ')'
 
 class ExpressionAdd(ExpressionOperator):
 
@@ -55,7 +66,7 @@ class ExpressionDice():
         return self.left.eval() * randint(1,self.right.eval())
 
     def __str__(self):
-        return self.left.__str__() + 'd' + self.right.__str__()
+        return str(self.left) + 'd' + str(self.right)
 
 class ExpressionNum():
 
@@ -134,7 +145,7 @@ class RollParser(Parser):
 
     @_('"-" expr %prec UMINUS')
     def expr(self, p):
-        return ExpressionSub( ExpressionNum(0), p.expr)
+        return ExpressionNeg(p.expr)
 
     @_('"(" expr ")"')
     def expr(self, p):
