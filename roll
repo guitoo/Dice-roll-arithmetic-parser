@@ -71,7 +71,7 @@ class CalcParser(Parser):
 
     @_('INTEGER')
     def expr(self, p):
-        return p.NUMBER
+        return p.INTEGER
     
     @_('INTEGER "d" INTEGER')
     def expr(self, p):
