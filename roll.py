@@ -63,7 +63,7 @@ class ExpressionDice():
         self.right=right
 
     def eval(self):
-        return self.left.eval() * randint(1,self.right.eval())
+        return  sum([ randint(1,self.right.eval()) for _ in range(self.left.eval())])
 
     def __str__(self):
         return str(self.left) + 'd' + str(self.right)
