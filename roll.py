@@ -221,69 +221,65 @@ class RollParser(Parser):
     def statement(self, p):
         return ExpressionRoot(p.expr)
 
+    @_("term")
+    def expr(self, p):
+        return p.term
+
     @_("sum_")
-    def statement(self, p):
-        return ExpressionRoot(p.sum_)
-
-    @_('expr "+" expr')
-    def sum_(self, p):
-        return ExpressionSum([p.expr0, p.expr1])
-
-    @_('sum_ "+" expr')
-    def sum_(self, p):
-        list_ = p.sum_
-        list_.append(p.expr)
-        return list_
-
-    @_('expr "-" expr')
-    def sum_(self, p):
-        return ExpressionSum([p.expr0, ExpressionNeg(p.expr1)])
-
-    @_('sum_ "-" expr')
-    def sum_(self, p):
-        list_ = p.sum_
-        list_.append(ExpressionNeg(p.expr))
-        return list_
-
-    @_("expr MUL expr")
-    def expr(self, p):
-        return ExpressionMul(p.expr0, p.expr1)
-
-    @_('expr "/" expr')
-    def expr(self, p):
-        return ExpressionDiv(p.expr0, p.expr1)
-
-    @_('"-" expr %prec UMINUS')
-    def expr(self, p):
-        return ExpressionNeg(p.expr)
-
-    @_('"(" expr ")"')
-    def expr(self, p):
-        return p.expr
-
-    @_('"(" sum_ ")"')
     def expr(self, p):
         return p.sum_
 
+    @_('term "+" term')
+    def sum_(self, p):
+        return ExpressionSum([p.term0, p.term1])
+
+    @_('sum_ "+" term')
+    def sum_(self, p):
+        list_ = p.sum_
+        list_.append(p.term)
+        return list_
+
+    @_('term "-" term')
+    def sum_(self, p):
+        return ExpressionSum([p.term0, ExpressionNeg(p.term1)])
+
+    @_('sum_ "-" term')
+    def sum_(self, p):
+        list_ = p.sum_
+        list_.append(ExpressionNeg(p.term))
+        return list_
+
+    @_("term MUL term")
+    def term(self, p):
+        return ExpressionMul(p.term0, p.term1)
+
+    @_('term "/" term')
+    def term(self, p):
+        return ExpressionDiv(p.term0, p.term1)
+
+    @_('"-" term %prec UMINUS')
+    def term(self, p):
+        return ExpressionNeg(p.term)
+
+    @_('"(" expr ")"')
+    def term(self, p):
+        return p.expr
+
     @_("INTEGER")
-    def expr(self, p):
+    def term(self, p):
         return ExpressionNum(p.INTEGER)
 
     @_('INTEGER "d" INTEGER')
-    def expr(self, p):
+    def term(self, p):
         return ExpressionDice(ExpressionNum(p.INTEGER0), ExpressionNum(p.INTEGER1))
 
     @_('"d" INTEGER')
-    def expr(self, p):
+    def term(self, p):
         return ExpressionDice(ExpressionNum(1), ExpressionNum(p.INTEGER))
 
     @_('expr "," expr')
     def list_(self, p):
         return ExpressionList([p.expr0, p.expr1])
-
-    @_('sum_ "," expr')
-    def list_(self, p):
-        return ExpressionList([p.sum_, p.expr])
 
     @_('list_ "," expr')
     def list_(self, p):
