@@ -145,7 +145,10 @@ class ExpressionSum(list):
         return ExpressionSum([ item.soft_eval() for item in self ])
 
     def __str__(self):
-        str_list = [str(self[0])]
+        if isinstance(self[0], ExpressionNeg):
+            str_list = [f"-{self[0].right}"]
+        else:
+            str_list = [str(self[0])]
         for expr in self[1:]:
             if isinstance(expr, ExpressionNeg):
                 str_list.append(f' - {expr.right}')
