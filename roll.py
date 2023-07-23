@@ -7,18 +7,18 @@ from sly import Lexer, Parser
 from typing import List
 
 symbol = {
-    operator.add: '+',
-    operator.sub: '-',
-    operator.mul: 'x',
-    operator.truediv: '/',
+    operator.add: "+",
+    operator.sub: "-",
+    operator.mul: "x",
+    operator.truediv: "/",
 }
 
-class ExpressionBinOp():
 
+class ExpressionBinOp:
     def __init__(self, left, op, right):
-        self.left=left
-        self.right=right
-        self.op=op
+        self.left = left
+        self.right = right
+        self.op = op
 
     def eval(self):
         return self.op(self.left.eval(), self.right.eval())
@@ -31,10 +31,10 @@ class ExpressionBinOp():
             return f"{str(self.left)}{symbol[self.op]}{str(self.right)}"
         return f"({str(self.left)} {symbol[self.op]} {str(self.right)})"
 
-class ExpressionNeg():
 
+class ExpressionNeg:
     def __init__(self, right):
-        self.right=right
+        self.right = right
 
     def eval(self):
         return operator.neg(self.right.eval())
@@ -43,38 +43,38 @@ class ExpressionNeg():
         return ExpressionNeg(self.right.soft_eval())
 
     def __str__(self):
-        return '(-' + str(self.right) + ')'
+        return "(-" + str(self.right) + ")"
+
 
 class ExpressionAdd(ExpressionBinOp):
-
     def __init__(self, left, right):
         super().__init__(left, operator.add, right)
 
-class ExpressionSub(ExpressionBinOp):
 
+class ExpressionSub(ExpressionBinOp):
     def __init__(self, left, right):
         super().__init__(left, operator.sub, right)
 
-class ExpressionMul(ExpressionBinOp):
 
+class ExpressionMul(ExpressionBinOp):
     def __init__(self, left, right):
         super().__init__(left, operator.mul, right)
 
-class ExpressionDiv(ExpressionBinOp):
 
+class ExpressionDiv(ExpressionBinOp):
     def __init__(self, left, right):
         super().__init__(left, operator.truediv, right)
 
-class ExpressionDice():
 
+class ExpressionDice:
     def __init__(self, left, right):
-        self.left=left
-        self.right=right
+        self.left = left
+        self.right = right
 
     def eval(self):
         sum = 0
         for i in range(self.left.eval()):
-            sum+=randint(1,self.right.eval())
+            sum += randint(1, self.right.eval())
         return sum
 
     def soft_eval(self):
@@ -86,19 +86,19 @@ class ExpressionDice():
         #     expressions.append(ExpressionNum(randint(1,self.right.eval())))
         # return ExpressionSum(expressions)
 
-        rolls = [] 
+        rolls = []
         for i in range(self.left.eval()):
-            rolls.append(randint(1,self.right.eval()))
+            rolls.append(randint(1, self.right.eval()))
         return ExpressionEvaluatedRoll(self, rolls)
 
     def __str__(self):
-        return str(self.left) + 'd' + str(self.right)
+        return str(self.left) + "d" + str(self.right)
 
-class ExpressionEvaluatedRoll():
 
-    def __init__(self, dice:ExpressionDice , rolls: List[float]):
-        self.dice=dice
-        self.rolls=rolls
+class ExpressionEvaluatedRoll:
+    def __init__(self, dice: ExpressionDice, rolls: List[float]):
+        self.dice = dice
+        self.rolls = rolls
 
     def eval(self):
         return sum(self.rolls)
@@ -112,10 +112,10 @@ class ExpressionEvaluatedRoll():
         return f"{self.dice.left}d{self.dice.right}:({', '.join(str(roll) for roll in self.rolls)})"
         # return f"({', '.join(str(roll) for roll in self.rolls)})"
 
-class ExpressionNum():
 
+class ExpressionNum:
     def __init__(self, num):
-        self.num=num
+        self.num = num
 
     def eval(self):
         return self.num
@@ -126,23 +126,30 @@ class ExpressionNum():
     def __str__(self):
         return str(self.num)
 
-class ExpressionList(list):
 
+class ExpressionList(list):
     def eval(self):
-        return [ item.eval() for item in self ]
+        return [item.eval() for item in self]
 
     def soft_eval(self):
-        return ExpressionList([ item.soft_eval() for item in self ])
+        return ExpressionList([item.soft_eval() for item in self])
 
     def __str__(self):
-        return '[' + ", ".join([ str(item).lstrip('(').rstrip(')') for item in self ]) + ']'
+        strings = [
+            str(item).lstrip("(").rstrip(")")
+            if isinstance(item, ExpressionSum)
+            else str(item)
+            for item in self
+        ]
+        return "[" + ", ".join(strings) + "]"
+
 
 class ExpressionSum(list):
     def eval(self):
         return sum(item.eval() for item in self)
 
     def soft_eval(self):
-        return ExpressionSum([ item.soft_eval() for item in self ])
+        return ExpressionSum([item.soft_eval() for item in self])
 
     def __str__(self):
         if isinstance(self[0], ExpressionNeg):
@@ -151,19 +158,36 @@ class ExpressionSum(list):
             str_list = [str(self[0])]
         for expr in self[1:]:
             if isinstance(expr, ExpressionNeg):
-                str_list.append(f' - {expr.right}')
+                str_list.append(f" - {expr.right}")
             else:
-                str_list.append(f' + {expr}')
-        return '(' + "".join(str_list) + ')'
+                str_list.append(f" + {expr}")
+        return "(" + "".join(str_list) + ")"
+
+
+class ExpressionRoot:
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self):
+        return self.expr.eval()
+
+    def soft_eval(self):
+        return ExpressionRoot(self.expr.soft_eval())
+
+    def __str__(self):
+        if isinstance(self.expr, ExpressionSum):
+            return str(self.expr).lstrip("(").rstrip(")")
+        return str(self.expr)
+
 
 class RollLexer(Lexer):
-    tokens = { INTEGER, MUL}
-    ignore = ' \t'
-    literals = { '+', '-', '/', '(', ')', 'd' , ','}
+    tokens = {INTEGER, MUL}
+    ignore = " \t"
+    literals = {"+", "-", "/", "(", ")", "d", ","}
 
-    MUL = r'\*|x'
+    MUL = r"\*|x"
 
-    @_(r'\d+')
+    @_(r"\d+")
     def INTEGER(self, t):
         t.value = int(t.value)
         return t
@@ -172,37 +196,38 @@ class RollLexer(Lexer):
         print("Illegal character '%s'" % t.value[0])
         self.index += 1
 
+
 class RollParser(Parser):
     tokens = RollLexer.tokens
     # debugfile = 'parser.out'
 
     precedence = (
-        ('left', ','),
-        ('left', '-'),
-        ('left', '+'),
-        ('left', 'MUL', '/'),
-        ('left', 'd'),
-        ('right', 'UMINUS'),
-        )
+        ("left", ","),
+        ("left", "-"),
+        ("left", "+"),
+        ("left", "MUL", "/"),
+        ("left", "d"),
+        ("right", "UMINUS"),
+    )
 
     def __init__(self):
         pass
 
-    @_('list_')
+    @_("list_")
     def statement(self, p):
-        return p.list_
+        return ExpressionRoot(p.list_)
 
-    @_('expr')
+    @_("expr")
     def statement(self, p):
-        return p.expr
+        return ExpressionRoot(p.expr)
 
-    @_('sum_')
+    @_("sum_")
     def statement(self, p):
-        return p.sum_
+        return ExpressionRoot(p.sum_)
 
     @_('expr "+" expr')
     def sum_(self, p):
-        return ExpressionSum( [p.expr0, p.expr1])
+        return ExpressionSum([p.expr0, p.expr1])
 
     @_('sum_ "+" expr')
     def sum_(self, p):
@@ -212,7 +237,7 @@ class RollParser(Parser):
 
     @_('expr "-" expr')
     def sum_(self, p):
-        return ExpressionSum( [p.expr0, ExpressionNeg(p.expr1)])
+        return ExpressionSum([p.expr0, ExpressionNeg(p.expr1)])
 
     @_('sum_ "-" expr')
     def sum_(self, p):
@@ -220,13 +245,13 @@ class RollParser(Parser):
         list_.append(ExpressionNeg(p.expr))
         return list_
 
-    @_('expr MUL expr')
+    @_("expr MUL expr")
     def expr(self, p):
-        return ExpressionMul( p.expr0, p.expr1)
+        return ExpressionMul(p.expr0, p.expr1)
 
     @_('expr "/" expr')
     def expr(self, p):
-        return ExpressionDiv( p.expr0, p.expr1)
+        return ExpressionDiv(p.expr0, p.expr1)
 
     @_('"-" expr %prec UMINUS')
     def expr(self, p):
@@ -240,14 +265,14 @@ class RollParser(Parser):
     def expr(self, p):
         return p.sum_
 
-    @_('INTEGER')
+    @_("INTEGER")
     def expr(self, p):
         return ExpressionNum(p.INTEGER)
-    
+
     @_('INTEGER "d" INTEGER')
     def expr(self, p):
         return ExpressionDice(ExpressionNum(p.INTEGER0), ExpressionNum(p.INTEGER1))
-    
+
     @_('"d" INTEGER')
     def expr(self, p):
         return ExpressionDice(ExpressionNum(1), ExpressionNum(p.INTEGER))
@@ -256,11 +281,16 @@ class RollParser(Parser):
     def list_(self, p):
         return ExpressionList([p.expr0, p.expr1])
 
+    @_('sum_ "," expr')
+    def list_(self, p):
+        return ExpressionList([p.sum_, p.expr])
+
     @_('list_ "," expr')
     def list_(self, p):
         list_ = p.list_
         list_.append(p.expr)
         return list_
+
 
 if __name__ == "__main__":
     lexer = RollLexer()
@@ -271,4 +301,3 @@ if __name__ == "__main__":
     soft_eval = ast.soft_eval()
     print(f"rolls: {str(soft_eval)}")
     print(soft_eval.eval())
-
