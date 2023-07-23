@@ -136,7 +136,7 @@ class ExpressionList(list):
 
     def __str__(self):
         strings = [
-            str(item).lstrip("(").rstrip(")")
+            str(item)[1:-1]
             if isinstance(item, ExpressionSum)
             else str(item)
             for item in self
@@ -176,7 +176,7 @@ class ExpressionRoot:
 
     def __str__(self):
         if isinstance(self.expr, ExpressionSum):
-            return str(self.expr).lstrip("(").rstrip(")")
+            return str(self.expr)[1:-1]
         return str(self.expr)
 
 
